@@ -8,7 +8,7 @@ def file_upload_path(instance, filename):
     """Generate file path for new file upload"""
     ext = filename.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"
-    return os.path.join('uploads', filename)
+    return f'files/{filename}'
 
 class File(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

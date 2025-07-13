@@ -1,4 +1,5 @@
-from django_filters.rest_framework import DjangoFilterBackend
+import django_filters
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import viewsets, status,filters
 from rest_framework.response import Response
 from .models import File
@@ -6,15 +7,27 @@ from .serializers import FileSerializer
 
 # Create your views here.
 
+class FileRecordFilter(FilterSet):
+    min_size = django_filters.NumberFilter(field_name="size", lookup_expr='gte')
+    max_size = django_filters.NumberFilter(field_name="size", lookup_expr='lte')
+    uploaded_after = django_filters.DateFilter(field_name="uploaded_at", lookup_expr='gte')
+    uploaded_before = django_filters.DateFilter(field_name="uploaded_at", lookup_expr='lte')
+
+    class Meta:
+        model = File
+        fields = ['file_type', 'min_size', 'max_size', 'uploaded_after', 'uploaded_before']
+
+
 class FileViewSet(viewsets.ModelViewSet):
-    queryset = File.objects.all()
+    queryset = File .objects.all().order_by('-uploaded_at')
     serializer_class = FileSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = FileRecordFilter
 
-    filterset_fields = ['file_type', 'uploaded_at']
+    # filterset_fields = ['file_type', 'uploaded_at']
     search_fields = ['original_filename', 'file_type']
     ordering_fields = ['uploaded_at', 'size']
-    ordering = ['-uploaded_at']
+    ordering = ['-uploaded_at','original_filename']
 
     def create(self, request, *args, **kwargs):
         file_obj = request.FILES.get('file')

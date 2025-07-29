@@ -1,6 +1,15 @@
+# /Secure-vault-backend/Dockerfile
+
 FROM python:3.10-slim
 
 WORKDIR /app
+
+# Set environment variables for Python
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Create a non-root user and group
+RUN addgroup --system app && adduser --system --group app
 
 # Install system dependencies
 RUN apt-get update && \
@@ -15,19 +24,19 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project files
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p media staticfiles data
+# Create directories and set ownership to the new user
+# This is more secure than chmod 777
+RUN mkdir -p media staticfiles data && \
+    chown -R app:app /app
 
-# Set permissions
-RUN chmod -R 777 data media staticfiles
+# Switch to the non-root user
+USER app
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
-
-# Make start script executable
-COPY start.sh .
+# Make start script executable (already owned by 'app' user from chown)
+# No need for chmod +x if permissions are set correctly in git
+# But it's safe to keep it.
 RUN chmod +x start.sh
 
 EXPOSE 8000
 
-CMD ["./start.sh"] 
+CMD ["./start.sh"]
